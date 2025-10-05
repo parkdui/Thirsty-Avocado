@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>인터랙티브 아트 컨트롤러</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      h1 {
+        color: #333;
+      }
+      button {
+        width: 80%;
+        max-width: 300px;
+        padding: 20px;
+        margin: 15px;
+        font-size: 24px;
+        cursor: pointer;
+        border: none;
+        border-radius: 12px;
+        background-color: #007bff;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, background-color 0.2s;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:active {
+        transform: scale(0.95);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>어느 쪽을 선택하시겠어요?</h1>
+    <button id="left-btn">왼쪽</button>
+    <button id="right-btn">오른쪽</button>
+
+    <!-- socket.io 라이브러리 불러오기 -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // 서버에 접속합니다.
+      const socket = io();
+
+      // 버튼 요소를 찾습니다.
+      const leftButton = document.getElementById("left-btn");
+      const rightButton = document.getElementById("right-btn");
+
+      // 왼쪽 버튼을 눌렀을 때
+      leftButton.addEventListener("click", () => {
+        // 서버로 'button-press'라는 이름과 함께 'left'라는 메시지를 보냅니다.
+        socket.emit("button-press", "left");
+        alert("왼쪽을 선택했습니다.");
+      });
+
+      // 오른쪽 버튼을 눌렀을 때
+      rightButton.addEventListener("click", () => {
+        // 서버로 'button-press'라는 이름과 함께 'right'라는 메시지를 보냅니다.
+        socket.emit("button-press", "right");
+        alert("오른쪽을 선택했습니다.");
+      });
+    </script>
+  </body>
+</html>
