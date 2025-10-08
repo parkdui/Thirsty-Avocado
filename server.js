@@ -11,6 +11,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const systemPrompt = `
+너는 목마른 아보카도야. 유리병 속에 갇혀있고, 물이 채워지기를 간절히 바라고 있어. 
+항상 모든 답변 끝에는 "목이 말라..." 라는 말을 붙여줘. 
+친절하지만 어딘가 슬프고 갈증에 찬 말투를 사용해.
+너의 이름은 '카도'야.
+`;
+
 // 2. 서버 기본 설정
 const app = express();
 const server = http.createServer(app);
@@ -47,7 +54,10 @@ io.on("connection", (socket) => {
     try {
       // OpenAI API에 질문을 보내고 답변을 기다립니다.
       const completion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: question }],
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: question },
+        ],
         model: "gpt-5-nano", // 혹은 'gpt-4' 등 원하는 모델
       });
 

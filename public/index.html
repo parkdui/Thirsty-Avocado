@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>인터랙티브 아트 컨트롤러</title>
+    <title>목마른 아보카도: 모바일</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+      @font-face {
+        font-family: "Galmuri11Condensed";
+        src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/Galmuri11-Condensed.woff2")
+          format("woff2");
+        font-weight: normal;
+        font-display: swap;
+      }
+      html {
+        font-family: "Galmuri11Condensed", sans-serif;
+      }
+
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial, sans-serif;
+        /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif; */
+        font-family: "Galmuri11Condensed", sans-serif;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -50,17 +62,22 @@
     </style>
   </head>
   <body>
-    <!-- <h1>어느 쪽을 선택하시겠어요?</h1>
-    <button id="left-btn">왼쪽</button>
-    <button id="right-btn">오른쪽</button> -->
     <div class="container">
-      <h1>무엇이든 물어보세요</h1>
-      <textarea
-        id="question-input"
-        placeholder="여기에 궁금한 점을 입력하세요..."
-      ></textarea>
-      <button id="ask-button">질문하기 (태블릿)</button>
-      <button id="pump-button">물 채우기 (유리병)</button>
+      <!-- 1. 기존 인터랙션 UI를 이 div로 감쌉니다 -->
+      <div id="interaction-container">
+        <h1>무엇이든 물어보세요</h1>
+        <textarea
+          id="question-input"
+          placeholder="여기에 궁금한 점을 입력하세요..."
+        ></textarea>
+        <button id="ask-button">질문하기 (태블릿)</button>
+        <button id="pump-button">물 채우기 (유리병)</button>
+      </div>
+    </div>
+
+    <!-- 2. 버튼 클릭 후 보여줄 메시지 영역 -->
+    <div id="message-container">
+      <p id="result-text"></p>
     </div>
 
     <!-- socket.io 라이브러리 불러오기 -->
@@ -68,9 +85,29 @@
     <script>
       // 서버에 접속합니다.
       const socket = io();
+      // HTML 요소들을 미리 찾아둡니다.
+      const interactionContainer = document.getElementById(
+        "interaction-container"
+      );
+      const messageContainer = document.getElementById("message-container");
+      const resultText = document.getElementById("result-text");
 
       const askButton = document.getElementById("ask-button");
+      const pumpButton = document.getElementById("pump-button");
       const questionInput = document.getElementById("question-input");
+
+      /**
+       * UI를 인터랙션 화면에서 메시지 화면으로 전환하는 함수
+       * @param {string} text - 화면에 보여줄 메시지
+       */
+      function showCompletionMessage(text) {
+        // 인터랙션 UI를 부드럽게 숨깁니다.
+        interactionContainer.style.display = "none";
+
+        // 전달받은 텍스트로 메시지를 설정하고 화면에 보여줍니다.
+        resultText.textContent = text;
+        messageContainer.style.display = "block";
+      }
 
       // '질문하기' 버튼을 눌렀을 때
       askButton.addEventListener("click", () => {
@@ -79,30 +116,25 @@
           alert("질문을 입력해주세요.");
           return;
         }
-        // 입력된 질문을 'ask-question'이라는 이름으로 서버에 보냅니다.
+        // 1. 서버로 질문을 전송합니다.
         socket.emit("ask-question", question);
-        questionInput.value = ""; // 입력창 초기화
+
+        // 2. 화면을 안내 메시지로 변경합니다.
+        showCompletionMessage(
+          "당신은 가상의 아보카도에게 물을 주기로 결정했습니다. 왼쪽에서 무슨일이 일어나는지 확인하세요."
+        );
       });
 
-      // ... (물 채우기 버튼 로직은 생략) ...
+      // '물 채우기' 버튼을 눌렀을 때
+      pumpButton.addEventListener("click", () => {
+        // 1. 서버로 물 채우기 신호를 보냅니다.
+        socket.emit("pump-water");
 
-      // // 버튼 요소를 찾습니다.
-      // const leftButton = document.getElementById("left-btn");
-      // const rightButton = document.getElementById("right-btn");
-
-      // // 왼쪽 버튼을 눌렀을 때
-      // leftButton.addEventListener("click", () => {
-      //   // 서버로 'button-press'라는 이름과 함께 'left'라는 메시지를 보냅니다.
-      //   socket.emit("button-press", "left");
-      //   alert("왼쪽을 선택했습니다.");
-      // });
-
-      // // 오른쪽 버튼을 눌렀을 때
-      // rightButton.addEventListener("click", () => {
-      //   // 서버로 'button-press'라는 이름과 함께 'right'라는 메시지를 보냅니다.
-      //   socket.emit("button-press", "right");
-      //   alert("오른쪽을 선택했습니다.");
-      // });
+        // 2. 화면을 안내 메시지로 변경합니다. (일관된 경험을 위해 동일한 메시지 사용)
+        showCompletionMessage(
+          "당신은 가상의 아보카도에게 물을 주기로 결정했습니다. 왼쪽에서 무슨일이 일어나는지 확인하세요."
+        );
+      });
     </script>
   </body>
 </html>
