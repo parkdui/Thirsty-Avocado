@@ -5,44 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       body {
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
         margin: 0;
-        background-color: #f0f0f0;
-      }
-      h1 {
+        background-color: #f0f2f5;
         color: #333;
       }
+      .container {
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+      }
+      textarea {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        margin-bottom: 1rem;
+        box-sizing: border-box;
+        min-height: 80px;
+      }
       button {
-        width: 80%;
-        max-width: 300px;
-        padding: 20px;
-        margin: 15px;
-        font-size: 24px;
+        padding: 15px 20px;
+        font-size: 18px;
+        font-weight: bold;
         cursor: pointer;
         border: none;
         border-radius: 12px;
-        background-color: #007bff;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s, background-color 0.2s;
       }
-      button:hover {
-        background-color: #0056b3;
+      #ask-button {
+        background-color: #007aff;
       }
-      button:active {
-        transform: scale(0.95);
+      #pump-button {
+        background-color: #34c759;
+        margin-top: 1rem;
       }
     </style>
   </head>
   <body>
-    <h1>어느 쪽을 선택하시겠어요?</h1>
+    <!-- <h1>어느 쪽을 선택하시겠어요?</h1>
     <button id="left-btn">왼쪽</button>
-    <button id="right-btn">오른쪽</button>
+    <button id="right-btn">오른쪽</button> -->
+    <div class="container">
+      <h1>무엇이든 물어보세요</h1>
+      <textarea
+        id="question-input"
+        placeholder="여기에 궁금한 점을 입력하세요..."
+      ></textarea>
+      <button id="ask-button">질문하기 (태블릿)</button>
+      <button id="pump-button">물 채우기 (유리병)</button>
+    </div>
 
     <!-- socket.io 라이브러리 불러오기 -->
     <script src="/socket.io/socket.io.js"></script>
@@ -50,23 +69,40 @@
       // 서버에 접속합니다.
       const socket = io();
 
-      // 버튼 요소를 찾습니다.
-      const leftButton = document.getElementById("left-btn");
-      const rightButton = document.getElementById("right-btn");
+      const askButton = document.getElementById("ask-button");
+      const questionInput = document.getElementById("question-input");
 
-      // 왼쪽 버튼을 눌렀을 때
-      leftButton.addEventListener("click", () => {
-        // 서버로 'button-press'라는 이름과 함께 'left'라는 메시지를 보냅니다.
-        socket.emit("button-press", "left");
-        alert("왼쪽을 선택했습니다.");
+      // '질문하기' 버튼을 눌렀을 때
+      askButton.addEventListener("click", () => {
+        const question = questionInput.value;
+        if (question.trim() === "") {
+          alert("질문을 입력해주세요.");
+          return;
+        }
+        // 입력된 질문을 'ask-question'이라는 이름으로 서버에 보냅니다.
+        socket.emit("ask-question", question);
+        questionInput.value = ""; // 입력창 초기화
       });
 
-      // 오른쪽 버튼을 눌렀을 때
-      rightButton.addEventListener("click", () => {
-        // 서버로 'button-press'라는 이름과 함께 'right'라는 메시지를 보냅니다.
-        socket.emit("button-press", "right");
-        alert("오른쪽을 선택했습니다.");
-      });
+      // ... (물 채우기 버튼 로직은 생략) ...
+
+      // // 버튼 요소를 찾습니다.
+      // const leftButton = document.getElementById("left-btn");
+      // const rightButton = document.getElementById("right-btn");
+
+      // // 왼쪽 버튼을 눌렀을 때
+      // leftButton.addEventListener("click", () => {
+      //   // 서버로 'button-press'라는 이름과 함께 'left'라는 메시지를 보냅니다.
+      //   socket.emit("button-press", "left");
+      //   alert("왼쪽을 선택했습니다.");
+      // });
+
+      // // 오른쪽 버튼을 눌렀을 때
+      // rightButton.addEventListener("click", () => {
+      //   // 서버로 'button-press'라는 이름과 함께 'right'라는 메시지를 보냅니다.
+      //   socket.emit("button-press", "right");
+      //   alert("오른쪽을 선택했습니다.");
+      // });
     </script>
   </body>
 </html>

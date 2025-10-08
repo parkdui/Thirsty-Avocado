@@ -1,8 +1,20 @@
+require("dotenv").config();
+
 // 1. 필요한 부품들을 가져옵니다.
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const { SerialPort } = require("serialport"); // 아두이노 통신을 위한 부품
+const OpenAI = require("openai"); // OpenAI 라이브러리 추가
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// 2. 서버 기본 설정
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
 // --- 아두이노 설정 ---
 // 아두이노가 어떤 USB 포트에 연결되었는지 확인하고 바꿔주세요.
@@ -18,17 +30,40 @@ port.on("error", function (err) {
 });
 // --------------------
 
-// 2. 서버 기본 설정
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
 // 'public' 폴더에 있는 파일들을 웹에서 접근할 수 있도록 해줍니다.
 app.use(express.static("public"));
 
 // 3. 서버에 누가 접속했을 때의 규칙 정의
 io.on("connection", (socket) => {
   console.log("새로운 사용자가 접속했습니다.");
+
+  // 'ask-question' 신호 (질문)을 받았을 때의 처리
+  socket.on("ask-question", async (question) => {
+    console.log("질문 받음: " + question);
+
+    // 먼저 관람객이 보낸 질문을 모든 클라이언트(태블릿 포함)에게 전달
+    io.emit("user-question", question);
+
+    try {
+      // OpenAI API에 질문을 보내고 답변을 기다립니다.
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: question }],
+        model: "gpt-5-nano", // 혹은 'gpt-4' 등 원하는 모델
+      });
+
+      const answer = completion.choices[0].message.content;
+      console.log("GPT 답변:", answer);
+
+      // 받은 답변을 모든 클라이언트(태블릿)에게 'gpt-answer' 신호로 보냅니다.
+      io.emit("gpt-answer", answer);
+    } catch (error) {
+      console.error("OpenAI API 호출 중 에러 발생:", error);
+      io.emit(
+        "gpt-answer",
+        "죄송합니다. 답변을 생성하는 중 오류가 발생했습니다."
+      );
+    }
+  });
 
   // 스마트폰에서 'button-press' 라는 신호를 보냈을 때 실행될 내용
   socket.on("button-press", (msg) => {
