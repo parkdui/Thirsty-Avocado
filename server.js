@@ -8,7 +8,7 @@ const { SerialPort } = require("serialport"); // 아두이노 통신을 위한 �
 // 아두이노가 어떤 USB 포트에 연결되었는지 확인하고 바꿔주세요.
 // 보통 윈도우는 'COM3', 'COM4' 등, 맥은 '/dev/tty.usbmodem...' 형태입니다.
 // 아두이노 IDE에서 포트를 확인하면 가장 정확합니다.
-const ARDUINO_PORT_PATH = "COM3"; // !!!!!!!!!!!!! 본인 PC에 맞게 수정 !!!!!!!!!!!!!
+const ARDUINO_PORT_PATH = "/dev/cu.usbmodem11301"; // !!!!!!!!!!!!! 본인 PC에 맞게 수정 !!!!!!!!!!!!!
 const port = new SerialPort({ path: ARDUINO_PORT_PATH, baudRate: 9600 });
 
 // 시리얼 포트에서 에러가 발생했을 때 알려줍니다.

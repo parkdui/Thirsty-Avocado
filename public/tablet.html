@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>인터랙티브 아트 디스플레이</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        background-color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+      #message-display {
+        font-family: sans-serif;
+        font-size: 10vw;
+        color: white;
+        opacity: 0; /* 처음에는 투명하게 */
+        transition: opacity 1s; /* 부드럽게 나타나도록 애니메이션 설정 */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message-display"></div>
+
+    <!-- socket.io 라이브러리 불러오기 -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // 서버에 접속합니다.
+      const socket = io();
+      const messageDisplay = document.getElementById("message-display");
+
+      // 서버로부터 'show-message' 라는 신호를 받았을 때
+      socket.on("show-message", (msg) => {
+        // div의 내용을 서버가 보내준 메시지로 바꾸고
+        messageDisplay.textContent = msg;
+        // 투명도를 1로 만들어 화면에 보이게 합니다.
+        messageDisplay.style.opacity = 1;
+
+        // 5초 후에 다시 투명하게 만듭니다.
+        setTimeout(() => {
+          messageDisplay.style.opacity = 0;
+        }, 5000);
+      });
+    </script>
+  </body>
+</html>
