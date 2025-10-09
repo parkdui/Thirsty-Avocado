@@ -27,14 +27,19 @@ const io = new Server(server);
 // 아두이노가 어떤 USB 포트에 연결되었는지 확인하고 바꿔주세요.
 // 보통 윈도우는 'COM3', 'COM4' 등, 맥은 '/dev/tty.usbmodem...' 형태입니다.
 // 아두이노 IDE에서 포트를 확인하면 가장 정확합니다.
-const ARDUINO_PORT_PATH = "/dev/cu.usbmodem11301"; // !!!!!!!!!!!!! 본인 PC에 맞게 수정 !!!!!!!!!!!!!
-const port = new SerialPort({ path: ARDUINO_PORT_PATH, baudRate: 9600 });
-
-// 시리얼 포트에서 에러가 발생했을 때 알려줍니다.
-port.on("error", function (err) {
-  console.log("Error: ", err.message);
-  console.log("아두이노가 연결되었는지, 포트 이름이 맞는지 확인해주세요.");
-});
+const ARDUINO_PORT_PATH = "/dev/cu.usbmodem11101"; // !!!!!!!!!!!!! 본인 PC에 맞게 수정 !!!!!!!!!!!!!
+let port;
+// [수정] 아두이노가 연결되지 않아도 서버가 실행되도록 try-catch로 감쌉니다.
+try {
+  port = new SerialPort({ path: ARDUINO_PORT_PATH, baudRate: 9600 });
+  port.on("error", (err) =>
+    console.log("아두이노 시리얼포트 에러: ", err.message)
+  );
+} catch (err) {
+  console.warn(
+    "아두이노 포트 연결에 실패했습니다. 펌프 기능은 작동하지 않습니다."
+  );
+}
 // --------------------
 
 // 'public' 폴더에 있는 파일들을 웹에서 접근할 수 있도록 해줍니다.
@@ -75,23 +80,19 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 스마트폰에서 'button-press' 라는 신호를 보냈을 때 실행될 내용
-  socket.on("button-press", (msg) => {
-    console.log("버튼이 눌렸습니다: " + msg);
-
-    if (msg === "left") {
-      // 'left' 버튼이 눌리면, 'show-message'라는 신호를 모든 접속자에게 보냅니다.
-      // 태블릿 PC가 이 신호를 받게 됩니다.
-      io.emit("show-message", "감사합니다");
-    } else if (msg === "right") {
-      // 'right' 버튼이 눌리면, 아두이노에게 'w'라는 신호를 보냅니다.
-      // 아두이노 코드에서 'w'를 받으면 펌프가 동작하도록 만들 예정입니다.
+  // [수정] 'pump-water' 신호를 받도록 새롭게 추가했습니다.
+  socket.on("pump-water", () => {
+    console.log("물 채우기 신호 받음");
+    // 아두이노 포트가 정상적으로 열려 있을 때만 신호를 보냅니다.
+    if (port && port.isOpen) {
       port.write("w", (err) => {
         if (err) {
-          return console.log("Error on write: ", err.message);
+          return console.error("아두이노에 데이터 쓰기 에러: ", err.message);
         }
         console.log('아두이노로 "w" 신호를 보냈습니다.');
       });
+    } else {
+      console.warn('아두이노가 연결되지 않아 "w" 신호를 보낼 수 없습니다.');
     }
   });
 
