@@ -20,13 +20,13 @@
       body {
         font-family: "Galmuri11Condensed", sans-serif;
         margin: 0;
-        background-color: #1a1a1a; /* Spline 로딩 전 기본 배경색 */
+        background-color: #1a1a1a;
         color: #f3ffc7;
         overflow: hidden;
       }
 
       #canvas3d {
-        position: absolute;
+        position: fixed; /* 배경이 스크롤되지 않도록 고정 */
         top: 0;
         left: 0;
         width: 100vw;
@@ -34,16 +34,12 @@
         z-index: 1;
       }
 
+      /* [변경] 컨테이너가 absolute 위치의 기준점이 되도록 설정 */
       .container {
         position: relative;
         z-index: 2;
         width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        padding: 40px 20px 25px;
+        height: 100vh; /* 뷰포트 높이 100%를 차지하도록 명시 */
         box-sizing: border-box;
       }
       .fade-in {
@@ -58,41 +54,73 @@
         }
       }
 
-      /* [추가] 로고 이미지 스타일 */
-      #logo-display {
-        flex-grow: 1; /* 남는 공간 차지 */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-      }
-      #logo-display img {
-        max-width: 80%; /* 로고 최대 크기 */
-        max-height: 50vh; /* 화면 높이의 50%를 넘지 않도록 */
-        object-fit: contain; /* 비율 유지하며 컨테이너에 맞춤 */
+      /* [변경] 상단 컨텐츠를 화면 중앙에 절대적으로 배치 */
+      #top-content {
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%); /* 정확한 중앙 정렬 */
+        width: 90%;
+        max-width: 400px;
+        padding: 20px;
+        box-sizing: border-box;
       }
 
-      /* 질문 텍스트 영역 (로고가 아닐 때만 사용) */
+      #logo-display,
       #question-area {
-        flex-grow: 1;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        flex-direction: column;
       }
+
+      #logo-display img {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+      }
+
       #question-text {
         font-size: 1.8rem;
-        line-height: 1.6;
+        line-height: 1.4;
         text-align: left;
         word-break: keep-all;
-        max-width: 400px;
+        width: 100%;
+        /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); */
+        white-space: pre-line;
+      }
+      /* [추가] 닉네임 입력창 스타일 */
+      #name-input {
+        display: none; /* 평소에는 숨김 */
+        background-color: rgba(0, 0, 0, 0.2);
+        color: #f3ffc7;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 1.2rem;
+        font-family: inherit;
+        text-align: center;
+        margin-top: 1.5rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #name-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+      #name-input:focus {
+        outline: 1px solid rgba(255, 255, 255, 0.6);
       }
 
-      /* 하단 버튼 영역 */
+      /* [유지] 버튼 영역을 화면 하단에 절대적으로 고정하는 방식 */
       #choice-area {
-        width: 100%;
+        position: absolute;
+        bottom: 12vh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
         max-width: 400px;
+        box-sizing: border-box;
       }
       #choice-container {
         display: grid;
@@ -119,7 +147,6 @@
         transform: scale(0.98);
       }
 
-      /* 최종 메시지 스타일 */
       #message-container p {
         font-size: 1.8rem;
         line-height: 1.6;
@@ -128,34 +155,31 @@
     </style>
   </head>
   <body>
-    <!-- 1. 배경 역할을 할 Spline 캔버스 --><canvas id="canvas3d"></canvas>
+    <canvas id="canvas3d"></canvas>
 
-    <!-- 2. 내용이 표시될 컨테이너 (캔버스 위) -->
     <div class="container fade-in">
-      <!-- 로고 표시 영역 (첫 페이지에만 사용) -->
-      <div id="logo-display">
-        <img src="Logo Type.svg" alt="Thirsty Avocado Logo" />
+      <div id="top-content">
+        <div id="logo-display">
+          <img src="Logo Type.svg" alt="Thirsty Avocado Logo" />
+        </div>
+        <div id="question-area" style="display: none">
+          <h1 id="question-text"></h1>
+          <input
+            type="text"
+            id="name-input"
+            placeholder="이름을 입력하세요..."
+          />
+        </div>
       </div>
 
-      <!-- 질문 텍스트 영역 (로고 이후 질문에 사용) -->
-      <div id="question-area" style="display: none">
-        <!-- 초기에는 숨김 -->
-        <h1 id="question-text"></h1>
-      </div>
-
-      <!-- 최종 메시지를 보여줄 컨테이너 -->
       <div id="message-container"></div>
 
-      <!-- 하단 버튼 영역 -->
       <div id="choice-area">
         <div id="choice-container"></div>
       </div>
     </div>
 
-    <!-- Socket.IO 라이브러리 -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- Spline 런타임 라이브러리 -->
     <script
       async
       src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"
@@ -173,43 +197,120 @@
       const app = new Application(canvas);
       app.load("https://prod.spline.design/x7tijJe3V0-ecl0S/scene.splinecode");
     </script>
-
-    <!-- 스토리 진행 로직 -->
     <script>
       const socket = io();
-      const logoDisplay = document.getElementById("logo-display"); // 로고 영역 추가
+      const topContent = document.getElementById("top-content");
+      const logoDisplay = document.getElementById("logo-display");
       const questionArea = document.getElementById("question-area");
       const questionTextElement = document.getElementById("question-text");
+      const nameInput = document.getElementById("name-input");
       const choiceArea = document.getElementById("choice-area");
       const choiceContainer = document.getElementById("choice-container");
       const messageContainer = document.getElementById("message-container");
+      let userName = "";
 
       const story = [
+        { logo: true, choices: [{ text: "시작하기", next: 1 }] },
         {
-          // 0번 스토리: 로고와 시작하기 버튼
-          logo: true, // 로고를 표시해야 함을 나타내는 플래그
-          choices: [{ text: "시작하기", next: 1 }],
-        },
-        {
-          // 1번 스토리: 첫 번째 질문
           question: "안녕하세요.\n목이 마른 아보카도를 찾아오셨군요.",
           choices: [{ text: "네, 안녕하세요.", next: 2 }],
         },
         {
-          // 2번 스토리: 두 번째 질문
           question: "물을 주러 온 친절한 당신을, 뭐라고 부르면 될까요?",
-          choices: [{ text: "다음으로", next: 3 }], // 다음 질문으로 이동
+          input: true,
+          choices: [{ text: "이렇게 불러주세요.", next: 3 }],
         },
         {
-          // 3번 스토리: 이름 확인 후 행동 선택
-          question: "반가워요. 아보카도만큼이나 멋진 이름이네요.",
+          question:
+            "잘 알겠습니다, 반가워요, {name}.\n아보카도만큼이나 멋진 이름이네요.",
           choices: [
-            {
-              text: "고마워요. (아보카도에게 말을 건다)",
-              action: "ask",
-              value: "안녕, 넌 누구니? 왜 그렇게 슬퍼보여?",
-            },
-            { text: "고마워요. (말없이 물을 준다)", action: "pump" },
+            { text: "그렇죠?", next: 4 },
+            { text: "하하.", next: 4 },
+          ],
+        },
+        {
+          question: "......눈 앞에 놓인 두 개의 아보카도가 보입니까?",
+          choices: [
+            { text: "두 개요? 하나 아닌가요?", next: 5 },
+            { text: "네, 보입니다.", next: 5 },
+          ],
+        },
+        {
+          question: "...정말 그렇게 생각하십니까?",
+          choices: [
+            { text: "네.", next: 6 },
+            { text: "네.", next: 6 },
+          ],
+        },
+        {
+          question:
+            "사실 여기 놓인 두 개의 아보카도들은 모두 당신을 빤히 바라보고 있습니다. 어때요, 시선이 느껴집니까?",
+          choices: [
+            { text: "네.", next: 7 },
+            { text: "글쎄요.", next: 7 },
+          ],
+        },
+        {
+          question:
+            "자세히 좀 보세요, 모두 물을 달라며 말라 비틀어지고 있잖습니까.",
+          choices: [
+            { text: "뭘 어떻게 하면 좋죠?", next: 8 },
+            { text: "잘 모르겠는데요.", next: 8 },
+          ],
+        },
+        {
+          question:
+            "방법은 간단합니다, 말을 주면 됩니다. 그러나 주의할 점이 있습니다.",
+          choices: [{ text: "그게 뭐죠?", next: 9 }],
+        },
+        {
+          question:
+            "당신의 말은 한 쪽의 아보카도에게만 주어질 것입니다. 그럼 다른 한 쪽은 말을 마실 수 없죠.",
+          choices: [{ text: "두 아보카도의 차이가 뭐죠?", next: 10 }],
+        },
+        {
+          question:
+            "좋은 질문입니다. 왼쪽 아보카도의 보이지 않는 뿌리는 미국 어딘가에 닿아있습니다. \n당신의 말 한 마디면, 미국 땅 어딘가에서 생수 한 모금이 추출되고, 이 아보카도의 갈증을 해소할 수 있을 겁니다.",
+          choices: [{ text: "그렇군요.", next: 11 }],
+        },
+        {
+          question:
+            "부드러운 텍스쳐, 아니, 텍스트가 답변으로 돌아오는 건 덤이랍니다. 그 어떤 질문에도 답해줄 겁니다.",
+          choices: [{ text: "그럼 다른 아보카도는?", next: 12 }],
+        },
+        {
+          question:
+            "오른쪽 아보카도는 믿거나 말거나, 진짜 아보카도입니다. 당신의 말 한 마디는 진짜 물이 되어서, 이 아보카도를 적셔줄 겁니다.",
+          choices: [{ text: "그렇군요.", next: 13 }],
+        },
+        {
+          question:
+            "이 아보카도는 조용할 겁니다. 언젠가...그렇게 말들이 모이면 부드럽고 풍미 가득한 고소한 아보카도가 되겠지요.",
+          choices: [
+            { text: "...뭘 선택해야 하죠?", next: 14 },
+            { text: "어느 아보카도가 더 낫죠?", next: 14 },
+          ],
+        },
+        {
+          question:
+            "어느 쪽도 나쁘거나 좋거나, 도덕적이거나 비도덕적이진 않습니다. \n부드러운 답변을 원하든, 부드러운 과육을 원하든.",
+          choices: [{ text: "...", next: 15 }],
+        },
+        {
+          question:
+            "중요한 건, 당신의 말과 터치는 한 번뿐이라는 겁니다. 선택은 돌이킬 수 없습니다. \n한 쪽을 선택하면, 선택받지 못한 다른 한 쪽은 말라갈 수밖에 없습니다.",
+          choices: [{ text: "...", next: 16 }],
+        },
+        {
+          question: "자, 그럼 아보카도에게 어떤 말을 줄지, 신중히 작성하시죠.",
+          choices: [{ text: "다 적었어요.", next: 17 }],
+        },
+        {
+          question:
+            "흠, 잘 알겠습니다. 그 말 그대로 전해주죠. \n그럼... 그 말을 어느 쪽 아보카도에게 주시겠습니까?",
+          choices: [
+            { text: "왼쪽, 가상의 아보카도", action: "ask" },
+            { text: "오른쪽, 현실의 아보카도", action: "pump" },
           ],
         },
       ];
@@ -219,18 +320,46 @@
       function renderStory(index) {
         const current = story[index];
 
-        // 로고 표시 여부에 따라 UI 전환
+        choiceContainer.innerHTML = "";
+        messageContainer.innerHTML = "";
+
         if (current.logo) {
-          logoDisplay.style.display = "flex"; // 로고 영역 보이기
-          questionArea.style.display = "none"; // 질문 영역 숨기기
-          questionTextElement.textContent = ""; // 질문 텍스트 초기화
+          logoDisplay.style.display = "flex";
+          questionArea.style.display = "none";
+          nameInput.style.display = "none"; // 로고 화면에서 입력창 숨기기
         } else {
-          logoDisplay.style.display = "none"; // 로고 영역 숨기기
-          questionArea.style.display = "flex"; // 질문 영역 보이기
-          questionTextElement.textContent = current.question;
+          logoDisplay.style.display = "none";
+          questionArea.style.display = "flex";
+
+          let questionToDisplay = current.question;
+          if (questionToDisplay.includes("{name}")) {
+            questionToDisplay = questionToDisplay.replace(
+              "{name}",
+              userName || "당신"
+            );
+          }
+          questionTextElement.textContent = "";
+
+          let i = 0;
+          const speed = 30;
+          function typeWriter() {
+            // [수정] 닉네임이 적용된 텍스트로 타이핑하도록 변경
+            if (i < questionToDisplay.length) {
+              questionTextElement.textContent += questionToDisplay.charAt(i);
+              i++;
+              setTimeout(typeWriter, speed);
+            }
+          }
+          typeWriter();
+
+          // [수정] 입력창을 보여주는 로직 추가
+          if (current.input) {
+            nameInput.style.display = "block";
+          } else {
+            nameInput.style.display = "none";
+          }
         }
 
-        choiceContainer.innerHTML = "";
         current.choices.forEach((choice) => {
           const button = document.createElement("button");
           button.textContent = choice.text;
@@ -238,37 +367,51 @@
           button.onclick = () => handleChoice(choice);
           choiceContainer.appendChild(button);
         });
-        messageContainer.innerHTML = ""; // 메시지 컨테이너 초기화
       }
 
       function handleChoice(choice) {
+        const current = story[currentStoryIndex];
+
+        if (current.input) {
+          userName = nameInput.value.trim();
+          if (userName === "") {
+            userName = "친절한 분";
+          }
+        }
+
         if (choice.next !== undefined) {
           currentStoryIndex = choice.next;
           renderStory(currentStoryIndex);
         } else if (choice.action === "ask") {
-          socket.emit("ask-question", choice.value);
+          socket.emit("ask-question", choice.value || "안녕"); // value가 없을 경우 기본값
           showCompletionMessage(
-            "당신은 아보카도에게 말을 걸었습니다.\n전시장의 태블릿을 확인하세요."
+            "가상의 아보카도에게 말이 전달됩니다...태블릿을 확인하세요. 부드러운 텍스트는 덤."
           );
         } else if (choice.action === "pump") {
           socket.emit("pump-water");
           showCompletionMessage(
-            "당신은 아보카도에게 물을 주기로 결정했습니다.\n전시장의 유리병을 확인하세요."
+            "현실의 아보카도에게 말을 전했습니다. 아무런 대답도 없지만, 부드러운 과육은 돌아올 겁니다.\n유리병을 확인하세요."
           );
         }
       }
 
       function showCompletionMessage(text) {
-        logoDisplay.style.display = "none"; // 로고 숨김
-        questionArea.style.display = "none"; // 질문 숨김
-        choiceArea.style.display = "none"; // 버튼 숨김
+        topContent.style.display = "none";
+        choiceArea.style.display = "none";
+
+        messageContainer.style.display = "flex";
+        messageContainer.style.position = "absolute";
+        messageContainer.style.top = "0";
+        messageContainer.style.left = "0";
+        messageContainer.style.width = "100%";
+        messageContainer.style.height = "100%";
+        messageContainer.style.justifyContent = "center";
+        messageContainer.style.alignItems = "center";
 
         const p = document.createElement("p");
         p.textContent = text;
         messageContainer.appendChild(p);
       }
-
-      // 페이지 로드 시 첫 번째 스토리(로고)를 보여주며 시작
       renderStory(currentStoryIndex);
     </script>
   </body>
