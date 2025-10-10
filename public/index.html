@@ -90,8 +90,8 @@
         /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); */
         white-space: pre-line;
       }
-      /* [추가] 닉네임 입력창 스타일 */
-      #name-input {
+
+      .text-input {
         display: none; /* 평소에는 숨김 */
         background-color: rgba(0, 0, 0, 0.2);
         color: #f3ffc7;
@@ -105,11 +105,16 @@
         width: 100%;
         box-sizing: border-box;
       }
-      #name-input::placeholder {
+      .text-input::placeholder {
         color: rgba(255, 255, 255, 0.5);
       }
-      #name-input:focus {
+      .text-input:focus {
         outline: 1px solid rgba(255, 255, 255, 0.6);
+      }
+      /* 메시지 입력창은 여러 줄 입력이 가능하도록 높이 조절 */
+      #message-input {
+        height: 100px;
+        text-align: left;
       }
 
       /* [유지] 버튼 영역을 화면 하단에 절대적으로 고정하는 방식 */
@@ -149,8 +154,11 @@
 
       #message-container p {
         font-size: 1.8rem;
-        line-height: 1.6;
-        text-align: center;
+        line-height: 1.4;
+        text-align: left;
+        width: 90%;
+        max-width: 400px;
+        white-space: pre-line; /* 줄바꿈 문자(\n)를 인식합니다. */
       }
     </style>
   </head>
@@ -167,8 +175,15 @@
           <input
             type="text"
             id="name-input"
+            class="text-input"
             placeholder="이름을 입력하세요..."
           />
+          <!-- [추가] 메시지 입력창 HTML -->
+          <textarea
+            id="message-input"
+            class="text-input"
+            placeholder="아보카도에게 할 말을 적어주세요..."
+          ></textarea>
         </div>
       </div>
 
@@ -204,10 +219,12 @@
       const questionArea = document.getElementById("question-area");
       const questionTextElement = document.getElementById("question-text");
       const nameInput = document.getElementById("name-input");
+      const messageInput = document.getElementById("message-input"); // [추가] 메시지 입력창 요소
       const choiceArea = document.getElementById("choice-area");
       const choiceContainer = document.getElementById("choice-container");
       const messageContainer = document.getElementById("message-container");
       let userName = "";
+      let userMessage = ""; // [추가] 사용자 메시지 저장 변수
 
       const story = [
         { logo: true, choices: [{ text: "시작하기", next: 1 }] },
@@ -217,7 +234,7 @@
         },
         {
           question: "물을 주러 온 친절한 당신을, 뭐라고 부르면 될까요?",
-          input: true,
+          input: "name",
           choices: [{ text: "이렇게 불러주세요.", next: 3 }],
         },
         {
@@ -303,6 +320,7 @@
         },
         {
           question: "자, 그럼 아보카도에게 어떤 말을 줄지, 신중히 작성하시죠.",
+          input: "message", // [수정] 어떤 입력창을 쓸지 명시
           choices: [{ text: "다 적었어요.", next: 17 }],
         },
         {
@@ -314,52 +332,51 @@
           ],
         },
       ];
-
       let currentStoryIndex = 0;
 
       function renderStory(index) {
         const current = story[index];
 
         choiceContainer.innerHTML = "";
+        choiceContainer.classList.remove("visible");
         messageContainer.innerHTML = "";
 
         if (current.logo) {
           logoDisplay.style.display = "flex";
           questionArea.style.display = "none";
-          nameInput.style.display = "none"; // 로고 화면에서 입력창 숨기기
+          showChoices();
         } else {
           logoDisplay.style.display = "none";
           questionArea.style.display = "flex";
 
-          let questionToDisplay = current.question;
-          if (questionToDisplay.includes("{name}")) {
-            questionToDisplay = questionToDisplay.replace(
-              "{name}",
-              userName || "당신"
-            );
-          }
+          let questionToDisplay = current.question.replace(
+            "{name}",
+            userName || "당신"
+          );
           questionTextElement.textContent = "";
 
           let i = 0;
           const speed = 30;
           function typeWriter() {
-            // [수정] 닉네임이 적용된 텍스트로 타이핑하도록 변경
             if (i < questionToDisplay.length) {
               questionTextElement.textContent += questionToDisplay.charAt(i);
               i++;
               setTimeout(typeWriter, speed);
+            } else {
+              // [수정] 어떤 입력창을 보여줄지 결정
+              nameInput.style.display =
+                current.input === "name" ? "block" : "none";
+              messageInput.style.display =
+                current.input === "message" ? "block" : "none";
+              showChoices();
             }
           }
           typeWriter();
-
-          // [수정] 입력창을 보여주는 로직 추가
-          if (current.input) {
-            nameInput.style.display = "block";
-          } else {
-            nameInput.style.display = "none";
-          }
         }
+      }
 
+      function showChoices() {
+        const current = story[currentStoryIndex];
         current.choices.forEach((choice) => {
           const button = document.createElement("button");
           button.textContent = choice.text;
@@ -367,30 +384,32 @@
           button.onclick = () => handleChoice(choice);
           choiceContainer.appendChild(button);
         });
+        choiceContainer.classList.add("visible");
       }
 
       function handleChoice(choice) {
         const current = story[currentStoryIndex];
 
-        if (current.input) {
-          userName = nameInput.value.trim();
-          if (userName === "") {
-            userName = "친절한 분";
-          }
+        // [수정] 어떤 입력값을 저장할지 결정
+        if (current.input === "name") {
+          userName = nameInput.value.trim() || "친절한 분";
+        } else if (current.input === "message") {
+          userMessage = messageInput.value.trim() || "안녕."; // 비어있을 경우 기본 메시지
         }
 
         if (choice.next !== undefined) {
           currentStoryIndex = choice.next;
           renderStory(currentStoryIndex);
         } else if (choice.action === "ask") {
-          socket.emit("ask-question", choice.value || "안녕"); // value가 없을 경우 기본값
+          // [수정] 저장된 사용자 메시지를 전송
+          socket.emit("ask-question", userMessage);
           showCompletionMessage(
-            "가상의 아보카도에게 말이 전달됩니다...태블릿을 확인하세요. 부드러운 텍스트는 덤."
+            "가상의 아보카도에게 말이 전달됩니다...\n태블릿을 확인하세요. 부드러운 텍스트는 덤."
           );
         } else if (choice.action === "pump") {
           socket.emit("pump-water");
           showCompletionMessage(
-            "현실의 아보카도에게 말을 전했습니다. 아무런 대답도 없지만, 부드러운 과육은 돌아올 겁니다.\n유리병을 확인하세요."
+            "현실의 아보카도에게 말을 주기로 결정했습니다...대답은 돌아오지 않지만, 언젠가 부드러운 과육이 올 것입니다.\n유리병을 확인하세요."
           );
         }
       }
@@ -398,16 +417,15 @@
       function showCompletionMessage(text) {
         topContent.style.display = "none";
         choiceArea.style.display = "none";
-
         messageContainer.style.display = "flex";
         messageContainer.style.position = "absolute";
+        // ... (나머지 스타일 동일)
         messageContainer.style.top = "0";
         messageContainer.style.left = "0";
         messageContainer.style.width = "100%";
         messageContainer.style.height = "100%";
         messageContainer.style.justifyContent = "center";
         messageContainer.style.alignItems = "center";
-
         const p = document.createElement("p");
         p.textContent = text;
         messageContainer.appendChild(p);
