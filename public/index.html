@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>목마른 아보카도: 모바일</title>
@@ -140,7 +140,9 @@
         padding: 20px;
         font-size: 1.2rem;
         cursor: pointer;
-        transition: background-color 0.2s, transform 0.2s;
+        transition:
+          background-color 0.2s,
+          transform 0.2s;
         font-family: inherit;
         font-weight: bold;
         backdrop-filter: blur(5px);
@@ -320,7 +322,7 @@
         },
         {
           question: "자, 그럼 아보카도에게 어떤 말을 줄지, 신중히 작성하시죠.",
-          input: "message", // [수정] 어떤 입력창을 쓸지 명시
+          input: "message",
           choices: [{ text: "다 적었어요.", next: 17 }],
         },
         {
@@ -351,7 +353,7 @@
 
           let questionToDisplay = current.question.replace(
             "{name}",
-            userName || "당신"
+            userName || "당신",
           );
           questionTextElement.textContent = "";
 
@@ -390,26 +392,24 @@
       function handleChoice(choice) {
         const current = story[currentStoryIndex];
 
-        // [수정] 어떤 입력값을 저장할지 결정
         if (current.input === "name") {
           userName = nameInput.value.trim() || "친절한 분";
         } else if (current.input === "message") {
-          userMessage = messageInput.value.trim() || "안녕."; // 비어있을 경우 기본 메시지
+          userMessage = messageInput.value.trim() || "안녕.";
         }
 
         if (choice.next !== undefined) {
           currentStoryIndex = choice.next;
           renderStory(currentStoryIndex);
         } else if (choice.action === "ask") {
-          // [수정] 저장된 사용자 메시지를 전송
           socket.emit("ask-question", userMessage);
           showCompletionMessage(
-            "가상의 아보카도에게 말이 전달됩니다...\n태블릿을 확인하세요. 부드러운 텍스트는 덤."
+            "가상의 아보카도에게 말이 전달됩니다...\n태블릿을 확인하세요. 부드러운 텍스트는 덤.",
           );
         } else if (choice.action === "pump") {
           socket.emit("pump-water");
           showCompletionMessage(
-            "현실의 아보카도에게 말을 주기로 결정했습니다...대답은 돌아오지 않지만, 언젠가 부드러운 과육이 올 것입니다.\n유리병을 확인하세요."
+            "현실의 아보카도에게 말을 주기로 결정했습니다...대답은 돌아오지 않지만, 언젠가 부드러운 과육이 올 것입니다.\n유리병을 확인하세요.",
           );
         }
       }
